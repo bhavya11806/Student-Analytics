@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Records - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Attendance Audit & Logs</h3>
+    <p class="text-muted small mb-0">Search, filter, and authorized editing of historical class attendance logs.</p>
+  </div>
+  <a href="{{ url_for('attendance.mark') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-circle me-1"></i> Take New Attendance
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-4">
+  <form method="GET" action="{{ url_for('attendance.records') }}" class="row g-2 align-items-center">
+    <div class="col-md-3">
+      <select name="subject_id" class="form-select form-select-sm">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if selected_subject == s.id %}selected{% endif %}>{{ s.code }} - {{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date or '' }}">
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">All Statuses</option>
+        <option value="Present" {% if selected_status == 'Present' %}selected{% endif %}>Present</option>
+        <option value="Absent" {% if selected_status == 'Absent' %}selected{% endif %}>Absent</option>
+        <option value="Late" {% if selected_status == 'Late' %}selected{% endif %}>Late</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="roll_no" class="form-control form-control-sm" placeholder="Search Roll No..." value="{{ search_roll }}">
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('attendance.records') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Records Table -->
+<div class="card p-0">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Session</th>
+          <th>Roll No</th>
+          <th>Student Name</th>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Marked By</th>
+          <th>Remarks</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.date.strftime('%d-%b-%Y') }}</td>
+          <td><span class="badge bg-light text-dark border">{{ r.session }}</span></td>
+          <td><code>{{ r.student.roll_no }}</code></td>
+          <td class="fw-semibold">{{ r.student.user.name }}</td>
+          <td>{{ r.subject.code }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+            <span class="badge bg-success">Present</span>
+            {% elif r.status == 'Absent' %}
+            <span class="badge bg-danger">Absent</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">Late</span>
+            {% endif %}
+          </td>
+          <td><small class="text-muted">{{ r.marker.name if r.marker else 'Faculty' }}</small></td>
+          <td><small class="text-muted">{{ r.remarks or '-' }}</small></td>
+          <td class="text-end">
+            {% if current_user.role == 'admin' or r.marked_by == current_user.id %}
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAttModal{{ r.id }}" title="Edit Record">
+              <i class="bi bi-pencil"></i>
+            </button>
+
+            <!-- Edit Modal -->
+            <div class="modal fade text-start" id="editAttModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form method="POST" action="{{ url_for('attendance.edit_record', record_id=r.id) }}">
+                    <div class="modal-header">
+                      <h5 class="modal-title fw-bold">Edit Attendance Record</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p class="small text-muted mb-2">Student: <strong>{{ r.student.user.name }}</strong> ({{ r.student.roll_no }})<br>Date: {{ r.date }} | Subject: {{ r.subject.name }}</p>
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Status *</label>
+                        <select name="status" class="form-select" required>
+                          <option value="Present" {% if r.status == 'Present' %}selected{% endif %}>Present</option>
+                          <option value="Absent" {% if r.status == 'Absent' %}selected{% endif %}>Absent</option>
+                          <option value="Late" {% if r.status == 'Late' %}selected{% endif %}>Late</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Remarks</label>
+                        <input type="text" name="remarks" class="form-control" value="{{ r.remarks or '' }}" placeholder="Reason for change...">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary btn-sm">Save Change</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <span class="text-muted small">Locked</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-4">No attendance records found matching query parameters.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

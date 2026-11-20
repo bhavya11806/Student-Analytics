@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}My Academic Dashboard - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+{% if not student %}
+<div class="alert alert-warning">Student profile not linked to this user account. Please contact the administrator.</div>
+{% else %}
+
+<!-- Low Attendance Warning Alert Banner -->
+{% if attendance.overall_percentage < 75.0 %}
+<div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+  <i class="bi bi-exclamation-triangle-fill fs-2 me-3"></i>
+  <div>
+    <h5 class="alert-heading fw-bold mb-1">Attendance Warning: {{ attendance.overall_percentage }}%</h5>
+    <div>Your current overall attendance is strictly below the college mandatory minimum of 75%. Please attend upcoming classes regularly to avoid detention in university examinations.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Header & Quick Download Center -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Welcome, {{ student.user.name }}</h3>
+    <p class="text-muted small mb-0">
+      Roll No: <code>{{ student.roll_no }}</code> · {{ student.course }} · Semester {{ student.semester }} ({{ student.department.name }})
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('reports.generate_student_attendance_pdf', student_id=student.id) }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download Attendance PDF
+    </a>
+    <a href="{{ url_for('reports.generate_student_performance_pdf', student_id=student.id) }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-award me-1"></i> Download Academic Transcript
+    </a>
+  </div>
+</div>
+
+<!-- Top Metrics & Risk Status Cards -->
+<div class="row g-3 mb-4">
+  <!-- Overall Attendance Card -->
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-title">Overall Attendance</div>
+      <h3 class="stat-value {% if attendance.overall_percentage >= 75 %}text-success{% else %}text-danger{% endif %}">
+        {{ attendance.overall_percentage }}%
+      </h3>
+      <div class="progress mt-2 mb-2">
+        <div class="progress-bar {% if attendance.overall_percentage >= 75 %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ attendance.overall_percentage }}%;"></div>
+      </div>
+      <small class="text-muted">{{ attendance.total_present }} attended of {{ attendance.total_conducted }} classes</small>
+    </div>
+  </div>
+
+  <!-- Academic Score Card -->
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-title">Overall Academic Score</div>
+      <h3 class="stat-value text-primary">{{ academic.overall_percentage }}%</h3>
+      <div class="progress mt-2 mb-2">
+        <div class="progress-bar bg-primary" style="width: {{ academic.overall_percentage }}%;"></div>
+      </div>
+      <small class="text-muted">Letter Grade: <strong class="badge bg-primary">{{ academic.grade }}</strong> ({{ academic.total_exams }} Exams)</small>
+    </div>
+  </div>
+
+  <!-- Risk Status Card -->
+  <div class="col-md-12 col-lg-6">
+    <div class="card p-3 h-100 border-start border-4 border-{{ risk.badge_class }}">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="stat-title">Surveillance Risk Category</span>
+        <span class="badge bg-{{ risk.badge_class }} fs-6">
+          <i class="bi {{ risk.icon }} me-1"></i> {{ risk.category }}
+        </span>
+      </div>
+      <p class="mb-1 fw-semibold text-slate-800">{{ risk.description }}</p>
+      <div class="small text-muted bg-light p-2 rounded">
+        <strong>Recommendation:</strong> {{ risk.recommended_action }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Subject-Wise Attendance Breakdown Table -->
+<div class="card p-3 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0"><i class="bi bi-journal-check text-primary me-2"></i> Subject-wise Attendance Breakdown</h6>
+    <a href="{{ url_for('student.attendance_history') }}" class="small text-decoration-none">Full Class Logs</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Subject Name</th>
+          <th>Credits</th>
+          <th>Conducted</th>
+          <th>Attended</th>
+          <th>Absent</th>
+          <th>Attendance Rate</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in attendance.subject_wise %}
+        <tr>
+          <td><code>{{ sub.code }}</code></td>
+          <td class="fw-semibold">{{ sub.name }}</td>
+          <td>{{ sub.credits }}</td>
+          <td>{{ sub.conducted }}</td>
+          <td>{{ sub.attended }}</td>
+          <td>{{ sub.absent }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="width: 100px;">
+                <div class="progress-bar {% if sub.percentage >= 75 %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ sub.percentage }}%;"></div>
+              </div>
+              <span class="fw-bold">{{ sub.percentage }}%</span>
+            </div>
+          </td>
+          <td>
+            {% if sub.percentage >= 75 %}
+            <span class="badge bg-success-subtle text-success">Satisfactory</span>
+            {% else %}
+            <span class="badge bg-danger-subtle text-danger">Shortage</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-3">No attendance records logged for your profile yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Examination Scores Table -->
+<div class="card p-3 mb-4">
+  <h6 class="fw-bold mb-3"><i class="bi bi-award-fill text-indigo me-2"></i> Recent Examination Marks & Internal Assessments</h6>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject</th>
+          <th>Exam Type</th>
+          <th>Marks Obtained</th>
+          <th>Max Marks</th>
+          <th>Percentage</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in recent_marks %}
+        <tr>
+          <td>{{ m.exam_date.strftime('%d-%b-%Y') }}</td>
+          <td class="fw-semibold">{{ m.subject.name }} ({{ m.subject.code }})</td>
+          <td><span class="badge bg-light text-dark border">{{ m.exam_type }}</span></td>
+          <td class="fw-bold text-primary">{{ m.marks_obtained }}</td>
+          <td>{{ m.max_marks }}</td>
+          <td>{{ m.percentage }}%</td>
+          <td>
+            <span class="badge {% if m.percentage >= 75 %}bg-success{% elif m.percentage >= 40 %}bg-primary{% else %}bg-danger{% endif %}">
+              {{ m.grade }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-3">No examination scores have been published yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

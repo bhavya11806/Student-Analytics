@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile & Security - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">My Account Profile & Security</h3>
+    <p class="text-muted small mb-0">Manage security credentials, contact details, and review system notifications.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Profile & Password Card -->
+  <div class="col-lg-6">
+    <div class="card p-4 mb-4">
+      <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-person-bounding-box text-primary me-2"></i> Profile Information</h5>
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="avatar-circle" style="width: 54px; height: 54px; font-size: 1.5rem;">
+          {{ current_user.name[:1]|upper }}
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0">{{ current_user.name }}</h5>
+          <span class="badge bg-primary text-uppercase">{{ current_user.role }}</span>
+          <div class="text-muted small mt-1">{{ current_user.email }}</div>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.profile') }}">
+        <input type="hidden" name="action" value="update_info">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Contact Phone Number</label>
+          <input type="text" name="phone" class="form-control" value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210">
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm">Update Contact</button>
+      </form>
+    </div>
+
+    <!-- Password Change Card -->
+    <div class="card p-4">
+      <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-shield-lock-fill text-indigo me-2"></i> Change Password</h5>
+      <form method="POST" action="{{ url_for('auth.profile') }}">
+        <input type="hidden" name="action" value="change_password">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Current Password</label>
+          <input type="password" name="current_password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">New Password (Min 6 characters)</label>
+          <input type="password" name="new_password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Confirm New Password</label>
+          <input type="password" name="confirm_password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save New Password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- In-app Notifications Card -->
+  <div class="col-lg-6">
+    <div class="card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <h5 class="fw-bold mb-0"><i class="bi bi-bell-fill text-warning me-2"></i> Attendance & Academic Alerts</h5>
+        <span class="badge bg-light text-muted border">{{ notifications|length }} Messages</span>
+      </div>
+
+      <div class="d-flex flex-column gap-3 overflow-auto" style="max-height: 520px;">
+        {% for notif in notifications %}
+        <div class="card p-3 border {% if not notif.is_read %}border-primary bg-light{% endif %}" id="notif-item-{{ notif.id }}">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <h6 class="fw-bold mb-0 {% if not notif.is_read %}text-primary{% endif %}">{{ notif.title }}</h6>
+            <small class="text-muted">{{ notif.created_at.strftime('%d-%b %H:%M') }}</small>
+          </div>
+          <p class="small text-muted mb-2">{{ notif.message }}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            {% if notif.sent_via_sns %}
+            <span class="badge bg-info-subtle text-info"><i class="bi bi-broadcast me-1"></i> Amazon SNS Dispatched</span>
+            {% else %}
+            <span></span>
+            {% endif %}
+            {% if not notif.is_read %}
+            <button class="btn btn-sm btn-outline-secondary mark-read-btn" data-id="{{ notif.id }}" style="font-size: 0.75rem;">
+              <i class="bi bi-check2"></i> Mark Read
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-bell-slash fs-1 text-muted mb-2"></i>
+          <p>You have no pending notifications or warnings.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

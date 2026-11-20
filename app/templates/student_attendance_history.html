@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance History - Student Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">My Class Attendance Logs</h3>
+    <p class="text-muted small mb-0">Complete historical record of all attendance entries logged by course instructors.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Dashboard
+    </a>
+    <a href="{{ url_for('reports.generate_student_attendance_pdf', student_id=student.id) }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download Verified PDF
+    </a>
+  </div>
+</div>
+
+<!-- Attendance Stats Summary Bar -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="small text-muted">Total Conducted</div>
+      <h3 class="fw-bold mb-0">{{ summary.total_conducted }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="small text-muted">Total Attended</div>
+      <h3 class="fw-bold text-success mb-0">{{ summary.total_present }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="small text-muted">Total Absent</div>
+      <h3 class="fw-bold text-danger mb-0">{{ summary.total_absent }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="small text-muted">Attendance Percentage</div>
+      <h3 class="fw-bold {% if summary.overall_percentage >= 75 %}text-success{% else %}text-danger{% endif %} mb-0">
+        {{ summary.overall_percentage }}%
+      </h3>
+    </div>
+  </div>
+</div>
+
+<div class="card p-0">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Session</th>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Status</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.date.strftime('%d-%b-%Y') }}</td>
+          <td><span class="badge bg-light text-dark border">{{ r.session }}</span></td>
+          <td><code>{{ r.subject.code }}</code></td>
+          <td class="fw-semibold">{{ r.subject.name }}</td>
+          <td>
+            {% if r.status == 'Present' %}
+            <span class="badge bg-success">Present</span>
+            {% elif r.status == 'Absent' %}
+            <span class="badge bg-danger">Absent</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">Late</span>
+            {% endif %}
+          </td>
+          <td><small class="text-muted">{{ r.remarks or '-' }}</small></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">No attendance records logged yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

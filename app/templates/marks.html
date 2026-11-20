@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Examination Marks - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Record Examination & Assessment Marks</h3>
+    <p class="text-muted small mb-0">Input internal, midterm, and assignment scores with real-time percentage validation.</p>
+  </div>
+  <a href="{{ url_for('marks.records') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-list-check me-1"></i> Marks Evaluation Roster
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <form method="POST" action="{{ url_for('marks.add') }}" id="marksForm">
+        <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-pencil-square text-primary me-2"></i> Examination Score Entry</h5>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Select Student *</label>
+            <select name="student_id" class="form-select" required>
+              <option value="">-- Choose Student --</option>
+              {% for s in students %}
+              <option value="{{ s.id }}">{{ s.roll_no }} - {{ s.user.name }} (Sem {{ s.semester }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Select Subject *</label>
+            <select name="subject_id" class="form-select" required>
+              <option value="">-- Choose Subject --</option>
+              {% for sub in subjects %}
+              <option value="{{ sub.id }}">{{ sub.code }} - {{ sub.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Examination Assessment Type *</label>
+            <select name="exam_type" class="form-select" required>
+              <option value="Midterm 1">Midterm Exam 1</option>
+              <option value="Midterm 2">Midterm Exam 2</option>
+              <option value="Internal Assignment">Internal Assignment</option>
+              <option value="Laboratory Evaluation">Laboratory Evaluation</option>
+              <option value="Semester End Examination">Semester End Examination</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Examination Date *</label>
+            <input type="date" name="exam_date" class="form-control" value="{{ today }}" required>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Marks Obtained *</label>
+            <input type="number" step="0.1" name="marks_obtained" id="marksObtained" class="form-control" placeholder="e.g. 42.5" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Maximum Marks *</label>
+            <input type="number" step="0.1" name="max_marks" id="maxMarks" class="form-control" value="50" required>
+          </div>
+        </div>
+
+        <!-- Real-time Score Preview Card -->
+        <div class="p-3 bg-light rounded border mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted fw-semibold">Calculated Score:</span>
+            <span class="fs-5 fw-bold text-primary" id="scorePreview">-- %</span>
+          </div>
+          <div class="progress mt-2" style="height: 6px;">
+            <div class="progress-bar bg-primary" id="scoreProgressBar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Faculty Evaluator Remarks (Optional)</label>
+          <input type="text" name="remarks" class="form-control" placeholder="e.g. Strong conceptual grasp, minor calculation slip...">
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i> Save Examination Score
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const obtInput = document.getElementById("marksObtained");
+  const maxInput = document.getElementById("maxMarks");
+  const preview = document.getElementById("scorePreview");
+  const bar = document.getElementById("scoreProgressBar");
+
+  function updatePreview() {
+    const obt = parseFloat(obtInput.value);
+    const max = parseFloat(maxInput.value);
+
+    if (!isNaN(obt) && !isNaN(max) && max > 0) {
+      if (obt > max) {
+        preview.textContent = "Error: Obtained exceeds Maximum!";
+        preview.className = "fs-6 fw-bold text-danger";
+        bar.style.width = "100%";
+        bar.className = "progress-bar bg-danger";
+      } else {
+        const pct = Math.round((obt / max) * 1000) / 10;
+        preview.textContent = pct + "%";
+        preview.className = "fs-5 fw-bold " + (pct >= 75 ? "text-success" : pct >= 40 ? "text-primary" : "text-danger");
+        bar.style.width = Math.min(100, pct) + "%";
+        bar.className = "progress-bar " + (pct >= 75 ? "bg-success" : pct >= 40 ? "bg-primary" : "bg-danger");
+      }
+    } else {
+      preview.textContent = "-- %";
+      bar.style.width = "0%";
+    }
+  }
+
+  obtInput.addEventListener("input", updatePreview);
+  maxInput.addEventListener("input", updatePreview);
+});
+</script>
+{% endblock %}

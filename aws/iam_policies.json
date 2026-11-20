@@ -1,0 +1,66 @@
+{
+  "Version": "2012-10-17",
+  "Comment": "Least-privilege IAM policies for Student Analytics Cloud (EC2 and Lambda roles)",
+  "Policies": {
+    "EC2AppRolePolicy": {
+      "Statement": [
+        {
+          "Sid": "AllowS3ReportStorage",
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:DeleteObject"
+          ],
+          "Resource": "arn:aws:s3:::student-analytics-reports-*/*"
+        },
+        {
+          "Sid": "AllowSNSPublish",
+          "Effect": "Allow",
+          "Action": "sns:Publish",
+          "Resource": "arn:aws:sns:*:*:student-attendance-alerts*"
+        },
+        {
+          "Sid": "AllowCloudWatchLogs",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:*:*:log-group:/aws/ec2/student-analytics:*"
+        }
+      ]
+    },
+    "LambdaExecutionRolePolicy": {
+      "Statement": [
+        {
+          "Sid": "AllowSNSPublishAlerts",
+          "Effect": "Allow",
+          "Action": "sns:Publish",
+          "Resource": "arn:aws:sns:*:*:student-attendance-alerts*"
+        },
+        {
+          "Sid": "AllowCloudWatchLogging",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/student-attendance-alert:*"
+        },
+        {
+          "Sid": "AllowVPCNetworkInterfaceAccess",
+          "Effect": "Allow",
+          "Action": [
+            "ec2:CreateNetworkInterface",
+            "ec2:DescribeNetworkInterfaces",
+            "ec2:DeleteNetworkInterface"
+          ],
+          "Resource": "*"
+        }
+      ]
+    }
+  }
+}

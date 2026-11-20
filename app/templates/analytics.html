@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}College Analytics - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Academic & Institutional Analytics</h3>
+    <p class="text-muted small mb-0">Cross-departmental trends, longitudinal attendance curves, and risk surveillance distributions.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('analytics.risk_analysis') }}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-shield-exclamation me-1"></i> Risk Identification Registry
+    </a>
+    <a href="{{ url_for('reports.export_performance_excel') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i> Export Academic Matrix (.xlsx)
+    </a>
+  </div>
+</div>
+
+<!-- High-Level Metric Tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-title">Overall Attendance Benchmark</div>
+      <h3 class="stat-value text-primary">{{ stats.overall_attendance }}%</h3>
+      <small class="text-muted">Target threshold: {{ stats.thresholds.attendance_threshold }}%</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-title">College Academic Average</div>
+      <h3 class="stat-value text-indigo">{{ stats.overall_performance }}%</h3>
+      <small class="text-muted">Pass criterion: {{ stats.thresholds.academic_pass_threshold }}%</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-title">Attendance Deficit Count</div>
+      <h3 class="stat-value text-danger">{{ stats.below_att_count }}</h3>
+      <small class="text-muted">Students flagged for notifications</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-title">High Distinction Students</div>
+      <h3 class="stat-value text-success">{{ stats.risk_counts.GOOD }}</h3>
+      <small class="text-muted">Meets all academic benchmarks</small>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Chart Visualizations -->
+<div class="row g-3 mb-4">
+  <!-- Monthly Trend -->
+  <div class="col-lg-8">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i> Attendance Longitudinal Trajectory</h6>
+        <span class="badge bg-light text-muted border">Monthly Granularity</span>
+      </div>
+      <div style="height: 300px;">
+        <canvas id="monthlyAttendanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Doughnut -->
+  <div class="col-lg-4">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart text-indigo me-2"></i> Academic Risk Distribution</h6>
+      </div>
+      <div style="height: 300px; position: relative;">
+        <canvas id="riskDistributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Department Comparison -->
+  <div class="col-lg-12">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i> Department-wise Attendance Comparison</h6>
+      </div>
+      <div style="height: 260px;">
+        <canvas id="deptComparisonChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

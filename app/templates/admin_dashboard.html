@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">College Executive Dashboard</h3>
+    <p class="text-muted small mb-0">Real-time attendance metrics, academic performance analytics & risk surveillance.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <!-- Configurable Thresholds Trigger Modal -->
+    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#thresholdsModal">
+      <i class="bi bi-sliders me-1"></i> Configure Thresholds
+    </button>
+    <!-- Trigger Automated Attendance Audit -->
+    <form method="POST" action="{{ url_for('admin.audit_attendance') }}" class="d-inline">
+      <button type="submit" class="btn btn-outline-warning btn-sm" onclick="return confirm('Execute automated attendance audit across all enrolled students and publish alerts?')">
+        <i class="bi bi-broadcast me-1"></i> Trigger Attendance Audit (SNS)
+      </button>
+    </form>
+    <a href="{{ url_for('reports.export_attendance_excel') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i> Export Master Sheet
+    </a>
+  </div>
+</div>
+
+<!-- Key Performance Statistic Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">Enrolled Students</div>
+          <h3 class="stat-value">{{ stats.total_students }}</h3>
+        </div>
+        <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">Faculty Staff</div>
+          <h3 class="stat-value">{{ stats.total_faculty }}</h3>
+        </div>
+        <div class="stat-icon purple"><i class="bi bi-person-badge"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">Active Subjects</div>
+          <h3 class="stat-value">{{ stats.total_subjects }}</h3>
+        </div>
+        <div class="stat-icon green"><i class="bi bi-journal-check"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">College Attendance</div>
+          <h3 class="stat-value">{{ stats.overall_attendance }}%</h3>
+        </div>
+        <div class="stat-icon blue"><i class="bi bi-pie-chart"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">Avg Academic Score</div>
+          <h3 class="stat-value">{{ stats.overall_performance }}%</h3>
+        </div>
+        <div class="stat-icon amber"><i class="bi bi-award"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-title">Low Attendance</div>
+          <h3 class="stat-value text-danger">{{ stats.below_att_count }}</h3>
+        </div>
+        <div class="stat-icon rose"><i class="bi bi-exclamation-triangle"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Visual Charts Section -->
+<div class="row g-3 mb-4">
+  <!-- Monthly Attendance Trends Line Chart -->
+  <div class="col-lg-8">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i> Monthly College Attendance Trajectory</h6>
+        <span class="badge bg-light text-muted border">Dynamic Timeline</span>
+      </div>
+      <div style="height: 280px;">
+        <canvas id="monthlyAttendanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic Risk Distribution Doughnut Chart -->
+  <div class="col-lg-4">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-shield-shaded text-indigo me-2"></i> Student Risk Classification</h6>
+        <a href="{{ url_for('analytics.risk_analysis') }}" class="small text-decoration-none">View All</a>
+      </div>
+      <div style="height: 280px; position: relative;">
+        <canvas id="riskDistributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Department Attendance Comparison -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-building text-primary me-2"></i> Department-wise Attendance Average</h6>
+      </div>
+      <div style="height: 250px;">
+        <canvas id="deptComparisonChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Performing Students Leaderboard -->
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i> Academic Distinction Leaderboard</h6>
+        <span class="badge bg-success-subtle text-success">Top Performers</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student Name</th>
+              <th>Roll No</th>
+              <th>Attendance</th>
+              <th>Marks Score</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for top in stats.top_performers %}
+            <tr>
+              <td><span class="badge rounded-circle bg-primary text-white" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;">{{ loop.index }}</span></td>
+              <td class="fw-semibold">{{ top.name }}</td>
+              <td><code>{{ top.roll_no }}</code></td>
+              <td>{{ top.attendance_percentage }}%</td>
+              <td class="fw-bold text-primary">{{ top.academic_percentage }}%</td>
+              <td><span class="badge bg-success">{{ top.grade }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Low Attendance Risk Alert Table -->
+<div class="card p-3 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h6 class="fw-bold mb-0 text-danger"><i class="bi bi-exclamation-octagon-fill me-2"></i> Students with Attendance Below Configured Threshold (&lt; {{ stats.thresholds.attendance_threshold }}%)</h6>
+      <small class="text-muted">Targeted intervention required. Notifications dispatch automatically via AWS Lambda & SNS.</small>
+    </div>
+    <a href="{{ url_for('analytics.risk_analysis', category='ATTENDANCE RISK') }}" class="btn btn-outline-danger btn-sm">Full Risk Registry</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Roll No</th>
+          <th>Student Name</th>
+          <th>Department</th>
+          <th>Semester</th>
+          <th>Conducted</th>
+          <th>Attended</th>
+          <th>Attendance Rate</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for low in low_att_students %}
+        <tr>
+          <td><code>{{ low.roll_no }}</code></td>
+          <td class="fw-semibold">{{ low.name }}</td>
+          <td>{{ low.department }}</td>
+          <td>Semester {{ low.semester }}</td>
+          <td>{{ low.conducted }}</td>
+          <td>{{ low.present }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="width: 80px;">
+                <div class="progress-bar bg-danger" style="width: {{ low.percentage }}%;"></div>
+              </div>
+              <span class="fw-bold text-danger">{{ low.percentage }}%</span>
+            </div>
+          </td>
+          <td>
+            <a href="{{ url_for('reports.generate_student_attendance_pdf', student_id=low.student.id) }}" class="btn btn-sm btn-outline-secondary" title="Download PDF Report">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-3">All students currently meet or exceed the mandatory attendance threshold.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Configurable Thresholds -->
+<div class="modal fade" id="thresholdsModal" tabindex="-1" aria-labelledby="thresholdsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.update_thresholds') }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="thresholdsModalLabel"><i class="bi bi-sliders me-2"></i> Configure Academic Risk Thresholds</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Adjust the college-wide thresholds used for automated risk classification and Lambda/SNS warning alerts.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Minimum Attendance Threshold (%)</label>
+            <input type="number" step="0.5" name="attendance_threshold" class="form-control" value="{{ stats.thresholds.attendance_threshold }}" required>
+            <div class="form-text">Students falling below this threshold are flagged for Attendance Risk.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Academic Passing Cut-off (%)</label>
+            <input type="number" step="0.5" name="academic_pass_threshold" class="form-control" value="{{ stats.thresholds.academic_pass_threshold }}" required>
+            <div class="form-text">Students scoring below this percentage are categorized as Academic Risk.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Academic Distinction / Good Threshold (%)</label>
+            <input type="number" step="0.5" name="academic_good_threshold" class="form-control" value="{{ stats.thresholds.academic_good_threshold }}" required>
+            <div class="form-text">Benchmark for high academic performance distinction.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save Threshold Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

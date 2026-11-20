@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Student Risk Analysis - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Student Academic Risk Analysis</h3>
+    <p class="text-muted small mb-0">Automated rule-based categorization identifying early drop-out indicators and academic shortages.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('reports.export_performance_excel') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i> Export Risk Matrix
+    </a>
+  </div>
+</div>
+
+<!-- Rule Breakdown Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card p-3 border-start border-4 border-success">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="badge bg-success">GOOD</span>
+        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+      </div>
+      <div class="mt-2 small text-muted">Attendance &ge; {{ thresholds.attendance_threshold }}%<br>Performance &ge; {{ thresholds.academic_good_threshold }}%</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 border-start border-4 border-warning">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="badge bg-warning text-dark">ATTENDANCE RISK</span>
+        <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+      </div>
+      <div class="mt-2 small text-muted">Attendance &lt; {{ thresholds.attendance_threshold }}%<br>Performance &ge; {{ thresholds.academic_good_threshold }}%</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 border-start border-4 border-danger">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="badge bg-danger">ACADEMIC RISK</span>
+        <i class="bi bi-x-circle-fill text-danger fs-5"></i>
+      </div>
+      <div class="mt-2 small text-muted">Attendance &ge; {{ thresholds.attendance_threshold }}%<br>Performance &lt; {{ thresholds.academic_pass_threshold }}%</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 border-start border-4 border-dark">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="badge bg-dark">HIGH RISK</span>
+        <i class="bi bi-shield-slash-fill text-dark fs-5"></i>
+      </div>
+      <div class="mt-2 small text-muted">Attendance &lt; {{ thresholds.attendance_threshold }}%<br>Performance &lt; {{ thresholds.academic_pass_threshold }}%</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card p-3 mb-4">
+  <form method="GET" action="{{ url_for('analytics.risk_analysis') }}" class="row g-2 align-items-center">
+    <div class="col-md-3">
+      <select name="category" class="form-select form-select-sm">
+        <option value="">All Risk Categories</option>
+        <option value="GOOD" {% if selected_category == 'GOOD' %}selected{% endif %}>GOOD</option>
+        <option value="ATTENDANCE RISK" {% if selected_category == 'ATTENDANCE RISK' %}selected{% endif %}>ATTENDANCE RISK</option>
+        <option value="ACADEMIC RISK" {% if selected_category == 'ACADEMIC RISK' %}selected{% endif %}>ACADEMIC RISK</option>
+        <option value="HIGH RISK" {% if selected_category == 'HIGH RISK' %}selected{% endif %}>HIGH RISK</option>
+        <option value="MODERATE PROGRESS" {% if selected_category == 'MODERATE PROGRESS' %}selected{% endif %}>MODERATE PROGRESS</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="department_id" class="form-select form-select-sm">
+        <option value="">All Departments</option>
+        {% for d in departments %}
+        <option value="{{ d.id }}" {% if selected_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="semester" class="form-select form-select-sm">
+        <option value="">All Semesters</option>
+        {% for s in range(1, 9) %}
+        <option value="{{ s }}" {% if selected_sem == s %}selected{% endif %}>Semester {{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-filter"></i> Apply Filter</button>
+      <a href="{{ url_for('analytics.risk_analysis') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Risk Table -->
+<div class="card p-0">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Roll No</th>
+          <th>Student Name</th>
+          <th>Department</th>
+          <th>Sem</th>
+          <th>Attendance</th>
+          <th>Academic Marks</th>
+          <th>Grade</th>
+          <th>Risk Category</th>
+          <th>Prescribed Action</th>
+          <th class="text-end">Reports</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in risks %}
+        <tr>
+          <td><code>{{ r.roll_no }}</code></td>
+          <td class="fw-semibold">{{ r.name }}</td>
+          <td>{{ r.department }}</td>
+          <td>Sem {{ r.semester }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress" style="width: 60px;">
+                <div class="progress-bar {% if r.attendance_percentage >= thresholds.attendance_threshold %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ r.attendance_percentage }}%;"></div>
+              </div>
+              <span class="fw-bold small">{{ r.attendance_percentage }}%</span>
+            </div>
+          </td>
+          <td class="fw-bold text-primary">{{ r.academic_percentage }}%</td>
+          <td><span class="badge bg-light text-dark border">{{ r.grade }}</span></td>
+          <td>
+            <span class="badge bg-{{ r.badge_class }}"><i class="bi {{ r.icon }} me-1"></i> {{ r.category }}</span>
+          </td>
+          <td><small class="text-muted">{{ r.recommended_action }}</small></td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('reports.generate_student_attendance_pdf', student_id=r.student.id) }}" class="btn btn-outline-secondary" title="Attendance PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+              <a href="{{ url_for('reports.generate_student_performance_pdf', student_id=r.student.id) }}" class="btn btn-outline-secondary" title="Performance Transcript">
+                <i class="bi bi-award"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="text-center text-muted py-4">No student records found in this risk category.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

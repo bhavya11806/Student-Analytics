@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Dashboard - Student Analytics Cloud{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">Faculty Teaching & Attendance Hub</h3>
+    <p class="text-muted small mb-0">Welcome, {{ faculty.user.name }} ({{ faculty.designation }} - {{ faculty.department.code }}).</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('attendance.mark') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-check2-square me-1"></i> Mark Today's Attendance
+    </a>
+    <a href="{{ url_for('marks.add') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil-square me-1"></i> Enter Marks
+    </a>
+  </div>
+</div>
+
+<!-- Assigned Subjects Cards -->
+<h5 class="fw-bold mb-3"><i class="bi bi-journal-bookmark-fill text-primary me-2"></i> Assigned Subjects</h5>
+<div class="row g-3 mb-4">
+  {% for item in subject_stats %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <span class="badge bg-primary-subtle text-primary fw-bold">{{ item.subject.code }}</span>
+        <span class="small text-muted">{{ item.subject.credits }} Credits · Sem {{ item.subject.semester }}</span>
+      </div>
+      <h6 class="fw-bold mb-2">{{ item.subject.name }}</h6>
+      
+      <div class="bg-light p-2 rounded mb-3">
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>Avg Attendance:</span>
+          <strong class="text-primary">{{ item.metrics.average_percentage }}%</strong>
+        </div>
+        <div class="progress" style="height: 6px;">
+          <div class="progress-bar bg-primary" style="width: {{ item.metrics.average_percentage }}%;"></div>
+        </div>
+        <div class="d-flex justify-content-between small text-muted mt-2">
+          <span>Sessions Conducted: <strong>{{ item.metrics.total_sessions }}</strong></span>
+          <span>Logged Records: <strong>{{ item.metrics.total_entries }}</strong></span>
+        </div>
+      </div>
+
+      <div class="mt-auto d-flex gap-2">
+        <a href="{{ url_for('attendance.mark', subject_id=item.subject.id) }}" class="btn btn-sm btn-outline-primary flex-grow-1">
+          <i class="bi bi-check-circle"></i> Mark Att
+        </a>
+        <a href="{{ url_for('marks.add', subject_id=item.subject.id) }}" class="btn btn-sm btn-outline-secondary flex-grow-1">
+          <i class="bi bi-pencil"></i> Marks
+        </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="card p-4 text-center text-muted">
+      <i class="bi bi-journal-x fs-1 mb-2"></i>
+      <p>No subjects explicitly assigned yet. Please contact the administrator.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Low Attendance Risk in Department -->
+<div class="card p-3 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0 text-danger"><i class="bi bi-shield-exclamation me-2"></i> Department Students with Attendance Deficit (&lt; 75%)</h6>
+    <a href="{{ url_for('faculty.student_roster') }}" class="small text-decoration-none">Full Department Roster</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Roll No</th>
+          <th>Student Name</th>
+          <th>Semester</th>
+          <th>Conducted</th>
+          <th>Attended</th>
+          <th>Attendance %</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for low in low_attendance_students %}
+        <tr>
+          <td><code>{{ low.roll_no }}</code></td>
+          <td class="fw-semibold">{{ low.name }}</td>
+          <td>Sem {{ low.semester }}</td>
+          <td>{{ low.conducted }}</td>
+          <td>{{ low.present }}</td>
+          <td>
+            <span class="badge bg-danger">{{ low.percentage }}%</span>
+          </td>
+          <td>
+            <a href="{{ url_for('reports.generate_student_attendance_pdf', student_id=low.student.id) }}" class="btn btn-sm btn-outline-secondary" title="Attendance PDF">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-3">All students in your department have satisfactory attendance!</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
