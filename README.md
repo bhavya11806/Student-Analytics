@@ -214,7 +214,7 @@ student_analytics_cloud/
 ├── requirements.txt              # Production Python package manifest
 ├── run.py                        # WSGI entrypoint
 └── README.md
-```
+``` file
 
 ---
 
