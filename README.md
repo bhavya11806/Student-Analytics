@@ -7,7 +7,7 @@ An enterprise-grade, cloud-architected academic management and intelligence web 
 ## 📌 Executive Overview
 
 The **Cloud-Based Student Attendance & Performance Analytics System** solves systemic challenges in higher education administration by digitizing attendance logging, internal assessment tracking, automated low-attendance warnings, and student academic risk surveillance.
-
+avfd...
 ### Key Capabilities
 - **Role-Based Access Control (RBAC):** Dedicated, secure dashboards for **Admin**, **Faculty**, and **Students**.
 - **Accurate Attendance Management:** Real-time logging with strict duplicate entry prevention `(student_id, subject_id, date, session)`.
