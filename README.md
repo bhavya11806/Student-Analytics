@@ -214,6 +214,34 @@ student_analytics_cloud/
 ├── run.py                        # WSGI entrypoint
 └── README.md
 ``` file
+---│   ├── models/                   # Relational SQLAlchemy models (12 tables)
+│   │   ├── user.py, student.py, faculty.py, department.py
+│   │   ├── subject.py, attendance.py, marks.py, settings.py
+│   ├── routes/                   # Modular blueprint controllers
+│   │   ├── auth.py, admin.py, faculty.py, student.py
+│   │   ├── attendance.py, marks.py, analytics.py, reports.py
+│   ├── services/                 # Business logic, S3, SNS, PDF & Excel generation
+│   │   ├── attendance_service.py, analytics_service.py
+│   │   ├── notification_service.py, report_service.py, s3_service.py
+│   ├── templates/                # Jinja2 responsive templates (Bootstrap 5)
+│   ├── static/                   # CSS stylesheets and Chart.js scripts
+│   └── utils/                    # Role decorators & input validators
+├── aws/                          # AWS Cloud infrastructure assets
+│   ├── lambda/attendance_alert.py
+│   ├── eventbridge/schedule_setup.md
+│   ├── deployment/ec2_setup.sh, nginx.conf, student_analytics.service
+│   └── iam_policies.json, cloudwatch_setup.md
+├── database/                     # MySQL schema, sample data & ER diagram
+│   ├── schema.sql, sample_data.sql, er_diagram.md
+├── docs/                         # Academic documentation & viva presentation outline
+│   ├── college_project_documentation.md, presentation_outline.md
+├── tests/                        # Automated unit & integration tests
+│   ├── test_auth.py, test_attendance.py, test_marks.py, test_analytics.py, test_reports.py
+├── config/config.py              # Environment configuration
+├── requirements.txt              # Production Python package manifest
+├── run.py                        # WSGI entrypoint
+└── README.md
+``` file
 ---
 
 ## 📜 License & Academic Integrity
