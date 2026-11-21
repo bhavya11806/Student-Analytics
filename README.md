@@ -62,7 +62,6 @@ avfd...
 | **Document Processing** | ReportLab (vector PDF generation), OpenPyXL (Excel spreadsheets), Pandas, NumPy |
 
 ---
-....
 ## ⚡ Quick Start & Local Setup
 
 ### 1. Clone & Enter Repository
