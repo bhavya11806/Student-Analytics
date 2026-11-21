@@ -27,3 +27,21 @@ jobs:
           context: .
           push: false
           tags: student-analytics:latest
+    
+  deploy:
+    name: Deploy to EC2
+    runs-on: self-hosted
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy Application
+        run: |
+          cd ~/Student-Analytics
+          git checkout main
+          git pull origin main
+          sudo docker build -t student-analytics .
+          sudo docker stop student-analytics-app || true
+          sudo docker rm student-analytics-app || true
+          sudo docker run -d -p 80:5000 --env-file .env --name student-analytics-app student-analytics
+
